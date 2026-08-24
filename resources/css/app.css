@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] {
+    display: none;
+}
+
+/* FullCalendar overrides */
+.fc .fc-toolbar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: theme('colors.gray.800');
+}
+
+.fc .fc-button-primary {
+    background-color: theme('colors.indigo.600');
+    border-color: theme('colors.indigo.600');
+}
+
+.fc .fc-button-primary:hover {
+    background-color: theme('colors.indigo.700');
+    border-color: theme('colors.indigo.700');
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+    background-color: theme('colors.indigo.800');
+    border-color: theme('colors.indigo.800');
+}
+
+.fc .fc-timegrid-slot {
+    height: 2.2em;
+}
+
+@media (max-width: 640px) {
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .fc .fc-toolbar-title {
+        order: -1;
+    }
+}
