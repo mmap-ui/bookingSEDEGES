@@ -6,6 +6,9 @@ use App\Models\User;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
+use Spatie\Permission\Models\Role;
+
+use Livewire\WithPagination;
 
 class UserManagement extends Component
 {
@@ -23,24 +26,35 @@ class UserManagement extends Component
 
     public ?string $role = 'chofer';
 
+    use WithPagination;
+    public string $search = '';
+    public bool $is_active = true;
+
     protected function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->editingId)],
             'password' => [$this->editingId === null ? 'required' : 'nullable', 'string', 'confirmed', Password::min(8)],
-            'role' => ['required', Rule::in(['administrador', 'responsable', 'chofer', 'consultas'])],
+            'is_active' => 'boolean',
+            'role' => ['required', 'string', Rule::exists('roles', 'name')],
         ];
     }
 
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    // Crear nuevos usuarios
     public function create(): void
     {
         $this->authorize('gestionar usuarios');
-
         $this->editingId = null;
         $this->resetValidation();
         $this->reset(['name', 'email', 'password', 'password_confirmation']);
-        $this->role = 'chofer';
+        $this->is_active = true;
+        $this->role = Role::query()->value('name') ?? '';
         $this->showModal = true;
     }
 
@@ -51,6 +65,7 @@ class UserManagement extends Component
         $this->editingId = $user->id;
         $this->name = $user->name;
         $this->email = $user->email;
+        $this->is_active = (bool) $user->is_active;
         $this->password = '';
         $this->password_confirmation = null;
         $this->role = $user->roles->pluck('name')->first() ?? 'chofer';
@@ -81,6 +96,7 @@ class UserManagement extends Component
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => $data['password'],
+                'is_active' => $data['is_active'] ?? true,
                 'email_verified_at' => now(),
             ]);
             $user->syncRoles([$data['role']]);
@@ -90,6 +106,7 @@ class UserManagement extends Component
             $user->update([
                 'name' => $data['name'],
                 'email' => $data['email'],
+                'is_active' => $data['is_active'] ?? true,
             ]);
             if (filled($data['password'])) {
                 $user->update(['password' => $data['password']]);
@@ -98,7 +115,7 @@ class UserManagement extends Component
             session()->flash('status', 'Usuario actualizado correctamente.');
         }
 
-        $this->reset(['editingId', 'name', 'email', 'password', 'password_confirmation']);
+        $this->reset(['editingId', 'name', 'email', 'password', 'password_confirmation','is_active']);
         $this->role = 'chofer';
         $this->showModal = false;
     }
@@ -109,7 +126,6 @@ class UserManagement extends Component
 
         if ($user->is(auth()->user())) {
             $this->addError('users', 'No puede eliminar su propia cuenta.');
-
             return;
         }
 
@@ -122,8 +138,15 @@ class UserManagement extends Component
         return view('livewire.user-management', [
             'users' => User::query()
                 ->with('roles')
+                ->when($this->search, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('email', 'like', '%' . $this->search . '%');
+                    });
+                })
                 ->orderBy('name')
-                ->get(),
+                ->paginate(15),
+            'roles' => Role::all(),
         ]);
     }
 }
