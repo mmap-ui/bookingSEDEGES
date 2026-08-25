@@ -21,12 +21,12 @@ return new class extends Migration
             $table->foreignId('current_team_id')->nullable();
             $table->string('profile_photo_path', 2048)->nullable();
             // Estado (Activo / Inactivo independientemente del Soft Delete)
-        $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true);
 
-        // Campos de Auditoría
-        $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-        $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
-        $table->foreignId('deleted_by')->nullable()->constrained('users')->nullOnDelete();
+            // Campos de Auditoría
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('deleted_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes(); // Añade la columna 'deleted_at'
         });

@@ -8,30 +8,25 @@ use App\Models\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class VehicleManagement extends Component
 {
     public bool $showModal = false;
-
     public ?int $editingId = null;
-
     public string $plate = '';
-
     public string $brand = '';
-
     public string $model = '';
-
     public ?int $year = null;
-
     public int $capacity = 4;
-
     public string $status = VehicleStatus::Disponible->value;
-
     public ?int $driverId = null;
-
     public ?string $maintenanceStartAt = null;
-
     public ?string $maintenanceEndAt = null;
+
+    use WithPagination;
+    public string $search = '';
+
 
     protected function rules(): array
     {
@@ -47,7 +42,13 @@ class VehicleManagement extends Component
             'driverId' => ['nullable', 'integer', 'exists:users,id'],
             'maintenanceStartAt' => [$isMaintenance ? 'required' : 'nullable', 'date'],
             'maintenanceEndAt' => [$isMaintenance ? 'required' : 'nullable', 'date', 'after:maintenanceStartAt'],
+            
         ];
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
     }
 
     private function resetMaintenanceDates(): void
@@ -98,11 +99,11 @@ class VehicleManagement extends Component
         $this->authorize($this->editingId === null ? 'crear vehiculos' : 'editar vehiculos');
 
         $data = $this->validate();
+
         $data['driver_id'] = $data['driverId'];
         unset($data['driverId']);
 
         $isMaintenance = $this->status === VehicleStatus::Mantenimiento->value;
-
         if ($isMaintenance) {
             $data['maintenance_start_at'] = Carbon::parse($data['maintenanceStartAt']);
             $data['maintenance_end_at'] = Carbon::parse($data['maintenanceEndAt']);
@@ -112,6 +113,7 @@ class VehicleManagement extends Component
         }
 
         unset($data['maintenanceStartAt'], $data['maintenanceEndAt']);
+
 
         if ($this->editingId === null) {
             Vehicle::query()->create($data);
@@ -145,10 +147,19 @@ class VehicleManagement extends Component
         return view('livewire.vehicle-management', [
             'vehicles' => Vehicle::query()
                 ->with('driver')
+
+                ->when($this->search, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('plate', 'like', '%' . $this->search . '%')
+                            ->orWhere('brand', 'like', '%' . $this->search . '%')->orWhere('year', 'like', '%' . $this->search . '%')
+                            ->orWhere('capacity', 'like', '%' . $this->search . '%');
+                    });
+                })
                 ->orderBy('plate')
-                ->get(),
+                ->paginate(15),
+
             'drivers' => User::query()
-                ->whereHas('roles', fn ($query) => $query->where('name', 'chofer'))
+                ->whereHas('roles', fn($query) => $query->where('name', 'chofer'))
                 ->orderBy('name')
                 ->get(['id', 'name']),
         ]);

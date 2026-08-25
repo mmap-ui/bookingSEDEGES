@@ -17,51 +17,83 @@
                 {{ __('Nuevo Vehículo') }}
             </x-button>
         </div>
+
+        {{-- Buscador por marca, placa, año, capacidad --}}
+        <div class="mb-4 flex items-center justify-between gap-4">
+            <div class="relative flex-1">
+                <x-input wire:model.live.debounce.300ms="search" type="text"
+                    placeholder="{{ __('Buscar placa, modelo, año, capacidad...') }}" class="w-full pl-10" />
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
     @endcan
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placa</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca / Modelo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placa
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca /
+                        Modelo</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Año</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver asignado</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver
+                        asignado</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones
+                    </th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse ($vehicles as $vehicle)
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ $vehicle->plate }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $vehicle->brand }} {{ $vehicle->model }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            {{ $vehicle->plate }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $vehicle->brand }}
+                            {{ $vehicle->model }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $vehicle->year ?? '—' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $vehicle->capacity }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if ($vehicle->status === \App\Enums\VehicleStatus::Disponible)
-                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">Disponible</span>
-                            @else
-                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">En mantenimiento</span>
+                                <span
+                                    class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">Disponible</span>
+                            @elseif($vehicle->status === \App\Enums\VehicleStatus::Mantenimiento)
+                                <span
+                                    class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">En
+                                    mantenimiento</span>
                                 @if ($vehicle->maintenance_start_at && $vehicle->maintenance_end_at)
                                     <span class="mt-1 block text-xs text-gray-500">
-                                        {{ $vehicle->maintenance_start_at->format('d/m/y H:i') }} → {{ $vehicle->maintenance_end_at->format('d/m/y H:i') }}
+                                        {{ $vehicle->maintenance_start_at->format('d/m/y H:i') }} →
+                                        {{ $vehicle->maintenance_end_at->format('d/m/y H:i') }}
                                     </span>
                                 @endif
+                            @else
+                                <span
+                                    class="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                    No Disponible
+                                </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $vehicle->driver?->name ?? '—' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {{ $vehicle->driver?->name ?? '—' }}</td>
+
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             @can('editar vehiculos')
-                                <button wire:click="edit({{ $vehicle->id }})" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                <button wire:click="edit({{ $vehicle->id }})"
+                                    class="text-indigo-600 hover:text-indigo-900">Editar</button>
                             @endcan
                             @can('eliminar vehiculos')
-                                <button
-                                    wire:click="delete({{ $vehicle->id }})"
+                                <button wire:click="delete({{ $vehicle->id }})"
                                     wire:confirm="{{ __('¿Eliminar este vehículo?') }}"
-                                    class="ml-3 text-red-600 hover:text-red-900"
-                                >Eliminar</button>
+                                    class="ml-3 text-red-600 hover:text-red-900">Eliminar</button>
                             @endcan
                         </td>
                     </tr>
@@ -74,6 +106,11 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    {{-- Paginacion --}}
+    <div class="mt-4 pt-3 border-t">
+        {{ $vehicles->links() }}
     </div>
 
     <x-dialog-modal wire:model="showModal" maxWidth="2xl">
@@ -104,19 +141,22 @@
 
                     <div>
                         <x-label value="{{ __('Año') }}" />
-                        <x-input wire:model="year" type="number" min="1990" max="2099" class="mt-1 block w-full" />
+                        <x-input wire:model="year" type="number" min="1990" max="2099"
+                            class="mt-1 block w-full" />
                         <x-input-error for="year" class="mt-2" />
                     </div>
 
                     <div>
                         <x-label value="{{ __('Capacidad (pasajeros)') }}" />
-                        <x-input wire:model="capacity" type="number" min="1" max="60" class="mt-1 block w-full" />
+                        <x-input wire:model="capacity" type="number" min="1" max="60"
+                            class="mt-1 block w-full" />
                         <x-input-error for="capacity" class="mt-2" />
                     </div>
 
                     <div>
                         <x-label value="{{ __('Chofer asignado') }}" />
-                        <select wire:model="driverId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <select wire:model="driverId"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="">—</option>
                             @foreach ($drivers as $driver)
                                 <option value="{{ $driver->id }}">{{ $driver->name }}</option>
@@ -127,7 +167,8 @@
 
                     <div>
                         <x-label value="{{ __('Estado') }}" />
-                        <select wire:model.live="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <select wire:model.live="status"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @foreach (\App\Enums\VehicleStatus::cases() as $vehicleStatus)
                                 <option value="{{ $vehicleStatus->value }}">{{ $vehicleStatus->label() }}</option>
                             @endforeach
@@ -135,6 +176,7 @@
                         <x-input-error for="status" class="mt-2" />
                     </div>
 
+                    
                     @if ($status === \App\Enums\VehicleStatus::Mantenimiento->value)
                         <div class="sm:col-span-2 rounded-md border border-amber-200 bg-amber-50 p-4">
                             <p class="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-3">
@@ -143,16 +185,19 @@
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <x-label value="{{ __('Inicio del mantenimiento') }}" />
-                                    <x-input wire:model="maintenanceStartAt" type="datetime-local" class="mt-1 block w-full" />
+                                    <x-input wire:model="maintenanceStartAt" type="datetime-local"
+                                        class="mt-1 block w-full" />
                                     <x-input-error for="maintenanceStartAt" class="mt-2" />
                                 </div>
                                 <div>
-                                    <x-label value="{{__('Fin estimado del mantenimiento') }}" />
-                                    <x-input wire:model="maintenanceEndAt" type="datetime-local" class="mt-1 block w-full" />
+                                    <x-label value="{{ __('Fin estimado del mantenimiento') }}" />
+                                    <x-input wire:model="maintenanceEndAt" type="datetime-local"
+                                        class="mt-1 block w-full" />
                                     <x-input-error for="maintenanceEndAt" class="mt-2" />
                                 </div>
                             </div>
-                            <p class="mt-2 text-xs text-amber-700">{{ __('Mientras dure el mantenimiento, el vehículo no podrá solicitarse.') }}</p>
+                            <p class="mt-2 text-xs text-amber-700">
+                                {{ __('Mientras dure el mantenimiento, el vehículo no podrá solicitarse.') }}</p>
                         </div>
                     @endif
                 </div>
